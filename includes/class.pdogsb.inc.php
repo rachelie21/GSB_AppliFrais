@@ -1,16 +1,5 @@
 <?php
-/**
- * Classe d'accès aux données.
- *
- * Utilise les services de la classe PDO
- * pour l'application GSB
- * Les attributs sont tous statiques,
- * les 4 premiers pour la connexion
- * $monPdo de type PDO
- * $monPdoGsb qui contiendra l'unique instance de la classe
- *
- *
- * PHP Version 7
+/* * PHP Version 7
  *
  * @category  PPE
  * @package   GSB
@@ -169,8 +158,8 @@ class PdoGsb
         $requetePrepare->bindParam(':unIdVisiteur', $idVisiteur, PDO::PARAM_STR);
         $requetePrepare->bindParam(':unMois', $mois, PDO::PARAM_STR);
         $requetePrepare->execute();
-        $laLigne = $requetePrepare->fetch();//on met le resultata de la ligne sql dans la ligne
-        return $laLigne['nb'];//dans le tableau a l endroit nb
+        $laLigne = $requetePrepare->fetch();//on met le resultat de la ligne sql dans la ligne
+        //return $laLigne['nb'];//dans le tableau à l'endroit nb//
     }
 
     /**
@@ -248,7 +237,42 @@ class PdoGsb
             $requetePrepare->execute();
         }
     }
-
+    
+    
+    /**
+     * Met à jour la table ligneFraisHorsForfait
+     * Met à jour la table ligneFraisHorsForfait pour un visiteur et
+     * un mois donné en enregistrant les nouveaux montants
+     *
+     * @param String $id         ID du visiteur
+     * @param String $mois       Mois sous la forme aaaamm
+     * @param String $libelle    Libellé du FHF
+     * @param String $montant    Montant du FHF
+     * @param String $idFrais    ID du FHF
+     *
+     * @return null
+     */
+    public function majFraisHorsForfait($id, $mois, $libelle, $date, $montant, $idFrais)
+    {
+           $dateFr = dateFrancaisVersAnglais($date);
+           $requetePrepare = PdoGSB::$monPdo->prepare(      
+                    'UPDATE lignefraishorsforfait '
+                   . 'SET lignefraishorsforfait.date = :uneDateFr, '
+                   . 'lignefraishorsforfait.montant = :unMontant, '  
+                   . 'lignefraishorsforfait.libelle = :unLibelle '
+                   . 'WHERE lignefraishorsforfait.idvisiteur = :unIdVisiteur '
+                   . 'AND lignefraishorsforfait.mois = :unMois '
+                   . 'AND lignefraishorsforfait.id = :unIdFrais'      
+           );
+           $requetePrepare->bindParam(':unIdVisiteur', $id, PDO::PARAM_STR);
+           $requetePrepare->bindParam(':unMois', $mois, PDO::PARAM_STR);
+           $requetePrepare->bindParam(':unLibelle', $libelle, PDO::PARAM_STR);
+           $requetePrepare->bindParam(':uneDateFr', $dateFr, PDO::PARAM_STR);
+           $requetePrepare->bindParam(':unMontant', $montant, PDO::PARAM_INT);
+           $requetePrepare->bindParam(':unIdFrais', $idFrais, PDO::PARAM_INT);
+           $requetePrepare->execute();  
+        }
+        
     /**
      * Met à jour le nombre de justificatifs de la table ficheFrais
      * pour le mois et le visiteur concerné
@@ -351,6 +375,7 @@ class PdoGsb
         $requetePrepare->bindParam(':unIdVisiteur', $idVisiteur, PDO::PARAM_STR);
         $requetePrepare->bindParam(':unMois', $mois, PDO::PARAM_STR);
         $requetePrepare->execute();
+        
         $lesIdFrais = $this->getLesIdFrais();
         foreach ($lesIdFrais as $unIdFrais) {// pour chaque ligne du tableau
             $requetePrepare = PdoGsb::$monPdo->prepare(
@@ -360,12 +385,9 @@ class PdoGsb
             );
             $requetePrepare->bindParam(':unIdVisiteur', $idVisiteur, PDO::PARAM_STR);
             $requetePrepare->bindParam(':unMois', $mois, PDO::PARAM_STR);
-            $requetePrepare->bindParam(
-                ':idFrais',
-                $unIdFrais['idfrais'],
-                PDO::PARAM_STR
-            );
+            $requetePrepare->bindParam(':idFrais', $unIdFrais['idfrais'],PDO::PARAM_STR);
             $requetePrepare->execute();
+        
         }
     }
 
@@ -442,7 +464,7 @@ class PdoGsb
             $mois = $laLigne['mois'];
             $numAnnee = substr($mois, 0, 4);//extraire une certaine quantité de caractères
             $numMois = substr($mois, 4, 2);//on commence au 4E caractere et on en extrait 2
-            $lesMois['$mois'] = array(
+            $lesMois[] = array(
                 'mois' => $mois,//annee et le mois en anglais 
                 'numAnnee' => $numAnnee,
                 'numMois' => $numMois
@@ -506,7 +528,65 @@ class PdoGsb
     }
     
     /**
+     * Modifie le libelle du frais à reporter (REFUSE: nomdufrais)
+     *
+     * @param String $idfrais contient l'ID du frais hors forfait à reporter
+     *
+     * @return null
+     */
+    public function majLibelle($idFrais)
+    {
+        $requetePrepare = PdoGSB::$monPdo->prepare(
+                'UPDATE lignefraishorsforfait '
+                .' SET libelle = CONCAT("REFUSE: ",libelle) '
+                .' WHERE lignefraishorsforfait.id =:unId '
+                );
+        $requetePrepare->bindParam(':unId', $idFrais, PDO::PARAM_STR);
+        $requetePrepare->execute();
+    }
+    
+    /**
+     * Reporte le frais hors forfait au mois suivant en fonction du mois actuel
+     *
+     * @param String $id contient l'id du visiteur concerné
+     * @param String $moisSuivant contient le mois à utiliser
+     *
+     * @return la liste des visiteurs sous la forme d'un tableau associatif
+     */
+    public function reporterFraisHorsForfait($id, $moisSuivant)
+    {
+        $requetePrepare = PdoGSB::$monPdo->prepare(
+                'UPDATE lignefraishorsforfait'
+                .' SET mois =:moisSuivant'
+                .' WHERE lignefraishorsforfait.id =:unId '
+                );
+        $requetePrepare->bindParam(':moisSuivant', $moisSuivant, PDO::PARAM_STR);
+        $requetePrepare->bindParam(':unId', $id, PDO::PARAM_STR);
+        $requetePrepare->execute();
+    }
+    
+    /**
+     * Retourne le montant des frais forfait
+     *
+     * @param String $idVisiteur contient l'id du visiteur concerné
+     * @param String $leMois contient le mois à utiliser
+     *
+     * @return le montant des frais forfait
+     */
+    public function montantFF($idVisiteur,$leMois)
+    {
+        $requetePrepare = PdoGSB::$monPdo->prepare(
+                'SELECT SUM(lignefraisforfait.quantite*fraisforfait.montant)'
+                . 'FROM lignefraisforfait JOIN fraisforfait'
+                . 'ON (idfraisforfait=id) '
+                );
+       $requetePrepare->execute();
+    }
+    
+    
+    /**
      * Retourne la liste de tous les visiteurs
+     * 
      * @return la liste des visiteurs sous la forme d'un tableau associatif
      */
      public function getListeVisiteur()
@@ -522,31 +602,29 @@ class PdoGsb
    }
    
      /**
-     * Fonction qui retourne les douze derniers mois passés en paramètre
+     * Fonction qui retourne les douze derniers mois qui précèdent le mois passé en paramètre
      *
      * @param String $mois Contient le mois à utiliser
      *
      * @return String le mois d'avant
      */
-   public function getLesDouzeMois($mois) {
-       $lesMois = array ();
-       for ( $i=0 ; $i<=12 ; $i++) {
+    public function getLesDouzeMois($mois) {
+        $lesMois = array ();
+        for ( $i=0 ; $i<=12 ; $i++) {
            $mois = getMoisPrecedent($mois) ;
            $numAnnee = substr($mois, 0, 4);
            $numMois = substr($mois, 4, 2);
 
       if (strlen($numMois) == 1) { //verifie le nombre de caractere dans le mois
          $numMois = '0' . $numMois;
-     }
-     $lesMois[] = array(
-         'mois' => $numAnnee.$numMois,
-         'numAnnee' => $numAnnee,
-         'numMois' => $numMois
-             );
-     
+      }
+      $lesMois[] = array(
+          'mois' => $numAnnee.$numMois,
+          'numAnnee' => $numAnnee,
+          'numMois' => $numMois
+              );
       }
       return ($lesMois) ;
-      
       }
 
     /**
@@ -556,18 +634,18 @@ class PdoGsb
      *
      * @return String le mois d'avant
      */
-  public function getMoisPrecedent($mois) {
-   $numAnnee = substr($mois, 0, 4);
-   $numMois = substr($mois, 4, 2);
-   if ($numMois == '01') {
-       $numMois = '12';
-       $numAnnee--;
-   } else {
-       $numMois--;
-   }
-   if (strlen($numMois) == 1) {
-       $numMois = '0' . $numMois;
-   }
-   return $numAnnee . $numMois;
-  }
+    public function getMoisPrecedent($mois) {
+        $numAnnee = substr($mois, 0, 4);
+        $numMois = substr($mois, 4, 2);
+        if ($numMois == '01') {
+            $numMois = '12';
+            $numAnnee--;
+        } else {
+            $numMois--;
+        }
+        if (strlen($numMois) == 1) {
+            $numMois = '0' . $numMois;
+        }
+        return $numAnnee . $numMois;
+        }
 }

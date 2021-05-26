@@ -11,9 +11,8 @@
  * @author   Beth Sefer
  * @copyright 2020-2021
  */
-
 ?>
-<form action="index.php?uc=validerFrais&action=corrigerFrais"
+<form action="index.php?uc=validerFrais&action=corrigerFF"
       method="post" role="form">
     <div class="col-md-4">
                <?php//liste déroulante des visiteurs?>
@@ -22,7 +21,7 @@
             <label for="lstVisiteurs" accesskey="n">Choisir le visiteur : </label>
             <select id="lstVisiteurs" name="lstVisiteurs" class="form-control">
                 <?php
-                foreach ($lesVisiteurs as $unVisiteur) {
+                foreach ($listevisiteur as $unVisiteur) {
                     $id = $unVisiteur['id'];
                     $nom = $unVisiteur['nom'];
                     $prenom = $unVisiteur['prenom'];
@@ -68,10 +67,9 @@
                 ?>    
 
             </select>
-        </div> 
+        </div>
 
     </div> <br><br><br><br>
-
 
     <div class="row">    
        <h2 style="color:orange">&nbsp;Valider la fiche de frais</h2>
@@ -95,16 +93,16 @@
                    }
                    ?>
                    <button class="btn btn-success" type="edit">Corriger</button>      
-                   <button class="btn btn-danger" type="reset">Reinitialiser</button>
+                   <button class="btn btn-danger" type="reset">Réinitialiser</button>
                </fieldset>
        </div>
     </div>
 </form>
-    
-<form action="index.php?uc=validerFrais&action=corrigerFraisHF"
+   
+<form action="index.php?uc=validerFrais&action=corrigerFHF"
       method="post" role="form">    
 <?php//elements non forfaitises?>
-    <input type="hidden" name="lstMois" id="idMoid" size="10" value="<?php echo $moisASelectionner?>" class="form-control"/>
+    <input type="hidden" name="lstMois" id="idMois" size="10" value="<?php echo $moisASelectionner?>" class="form-control"/>
     <input type="hidden" name="lstVisiteurs" id="idVisiteur" size="10" value="<?php echo $visiteurASelectionner ?>" class="form-control"/>
     <h3>Eléments non forfaitisés</h3>
    <div class="panel panel-info1" >
@@ -120,21 +118,22 @@
            </thead>
            <tbody >
            <?php
+         
+           
            foreach ($lesFraisHorsForfait as $unFraisHorsForfait) {
                $libelle = htmlspecialchars($unFraisHorsForfait['libelle']);
                $date = $unFraisHorsForfait['date'];
                $montant = $unFraisHorsForfait['montant'];
-               $id = $unFraisHorsForfait['id']; ?>       
+               $id = $unFraisHorsForfait['id']; ?>      
                 <input type="hidden" name="frais" id="idFrais" size="10" value="<?php echo $id ?>" class="form-control"/>
                <tr >
                    <td style="border-right:1px solid #ff6f02;"><input type="text" name="date" id="idDate" size="10" value="<?php echo $date ?>" class="form-control"/></td>
                    <td style="border-right:1px solid #ff6f02;"><input type="text" name="libelle" id="idLibelle" size="10" value="<?php echo $libelle ?>" class="form-control"/></td>
                    <td style="border-right:1px solid #ff6f02;"><input type="text" name="montant" id="idMontant" size="10" value="<?php echo $montant ?>" class="form-control"/></td>
                    
-                   
-                   <td><button class="btn btn-success" type="edit">Corriger</button>
+                   <td><button class="btn btn-success" type="edit" name="corriger">Corriger</button>
                        <button class="btn btn-danger" type="reset">Reinitialiser</button>
-                   <a href="index.php?uc=validerFrais&action=supprimerFrais"  type="reset" class="btn btn-danger" role="button">Supprimer</a></td>
+                       <button class="btn btn-danger" role="button" name="reporter">Reporter</button>
                </tr>
                <?php
            }
@@ -143,14 +142,11 @@
        </table>
    </div>
 </form>
-
    
     <div><label for="justf">Nombre de justificatifs:</label> <input type="text" name="justf" id="justf" size="1" value="<?php echo $nbJustificatifs?>" /></div><br>
     <form action="index.php?uc=validerFrais&action=validerFrais"
-      method="post" role="form"> 
+      method="post" role="form">
     <input type="hidden" name="lstMois" id="idMois" size="10" value="<?php echo $moisASelectionner?>" class="form-control"/>
     <input type="hidden" name="lstVisiteurs" id="idVisiteur" size="10" value="<?php echo $visiteurASelectionner ?>" class="form-control"/>
     <input id="ok" type="submit" value="Valider" class="btn btn-success" role="button">
     </form>
-    
-  

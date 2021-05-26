@@ -22,6 +22,7 @@ case 'selectionnerMois':
     // les mois étant triés décroissants
     $lesCles = array_keys($lesMois);//tableau de clés
     $moisASelectionner = $lesCles[0];
+    var_dump($lesMois);
     include 'vues/v_listeMois.php';
     break;
 case 'voirEtatFrais':

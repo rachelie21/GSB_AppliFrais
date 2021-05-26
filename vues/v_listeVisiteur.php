@@ -24,12 +24,12 @@ if ($uc=='validerFrais'){
 <?php
 }else{
 ?> 
-    <h2>Suivre le paiement des fiches de frais</h2>
+    <!--<h2>Suivre le paiement des fiches de frais</h2>
     <div class="row">
         <div class="col-md-4"><?php //col-md-4 prend 1/4 de la page ?>
       
             <form action="index.php?uc=suivrePaiement&action=afficheFrais" 
-                method="post" role="form">
+                method="post" role="form">-->
 <?php
 }
 ?>           
@@ -39,13 +39,13 @@ if ($uc=='validerFrais'){
                 <select id="lstVisiteurs" name="lstVisiteurs" class="form-control">
                     <?php
                 
-                    foreach ($lesVisiteurs as $unVisiteur) {
+                    foreach ($listevisiteur as $unVisiteur) {
 
                         $id = $unVisiteur['id'];                       
                         $nom = $unVisiteur['nom'];
                         $prenom = $unVisiteur['prenom'];
                         
-                        if ($unVisiteur == $leVisiteurASelectionner) {
+                        if ($unVisiteur == $visiteurASelectionner) {
                             ?>
                             <option selected value="<?php echo $id ?>">
                                 <?php echo $nom . ' ' . $prenom ?> </option>
